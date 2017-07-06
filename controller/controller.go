@@ -5,12 +5,36 @@ import (
   "strconv"
   "log"
   "github.com/labstack/echo"
+  "github.com/aerospike/aerospike-client-go"
 )
+
+/*
+
+Aerospike      |  SQL
+--------------------------------
+namespace      |  db
+sets           |  table
+bin            |  column
+key            |  primary_key
+record         |  row
+
+*/
 
 type Data struct {
   ID    int     `json:"id"`
   Body  string  `json:"body"`
 }
+
+client, err := as.NewClient("127.0.0.1", 3000)
+if err != nil {
+  log.Fatal(err)
+}
+
+key, err := as.NewKey("namespace-test", "set-test", "key-test")
+if err != nil {
+  log.Fatal(err)
+}
+
 /*
 type Error struct {
   Status      int    `json:"status"`
@@ -23,6 +47,7 @@ type Response struct {
   Body interface{} `json:"data,omitempty"`
 }
 */
+
 var (
   startSequence = 1
   datas = map[int]*Data{}
@@ -37,7 +62,7 @@ func GetOneData(c echo.Context) error {
 }
 
 func CreateData(c echo.Context) error {
-  d := new(Data)
+  bin := as.NewBin("")
 
   if err := c.Bind(d); err != nil {
     return c.JSON(http.StatusInternalServerError, ErrInternalServer)
@@ -50,8 +75,9 @@ func CreateData(c echo.Context) error {
   return c.JSON(http.StatusCreated, d)
 }
 
-/*
 func UpdateUser(c echo.Context) {
+  d := new(Data)
+
 
 }
-*/
+
