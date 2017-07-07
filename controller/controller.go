@@ -47,10 +47,24 @@ func GetOneUser(c echo.Context, client *Client) error {
   return c.JSON(http.StatusOK, users[id])
 }
 
-func CreateUser(c echo.Context, client *Client) error {
+func GetAllUsers(c echo.Context, client *Client) error {
 
-  key, err := NewKey("test", "Users-test", "user-key-test")
+  recordSet, err := client.ScanAll(nil, "test", "Users-test")
   panicOnError(err)
+
+  for res := range recordSet.Results() {
+    if res.Err != nil {
+      panicOnError(res.Err)
+    } else {
+      log.Println(res.Record)
+      return c.JSON(http.StatusOK, res.Record)
+    }
+  }
+
+  return c.JSON(http.StatusInternalServerError, ErrInternalServer)
+}
+
+func CreateUser(c echo.Context, client *Client) error {
 
   u := new(User)
   u.Id = idSeq
@@ -59,6 +73,9 @@ func CreateUser(c echo.Context, client *Client) error {
     panicOnError(err)
     return c.JSON(http.StatusInternalServerError, ErrInternalServer)
   }
+
+  key, err := NewKey("test", "Users-test", u.Username)
+  panicOnError(err)
 
   userBin := BinMap{
     "id"      : u.Id,

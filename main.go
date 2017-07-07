@@ -4,7 +4,7 @@ import (
   "net/http"
   "log"
 
-  "github.com/andrasat/golang-basic-api/controller"
+  ctrl "github.com/andrasat/golang-basic-api/controller"
   "github.com/labstack/echo"
   "github.com/labstack/echo/middleware"
   as "github.com/aerospike/aerospike-client-go"
@@ -59,12 +59,16 @@ func main() {
     return c.String(http.StatusOK, "Hello Go 1234567890")
   })
 
-  e.GET("/data/:id", func(c echo.Context) error {
-    return controller.GetOneUser(c, client)
+  e.GET("/users/:id", func(c echo.Context) error {
+    return ctrl.GetOneUser(c, client)
   })
 
-  e.POST("/data", func(c echo.Context) error {
-    return controller.CreateUser(c, client)
+  e.GET("/users", func(c echo.Context) error {
+    return ctrl.GetAllUsers(c, client)
+  })
+
+  e.POST("/users", func(c echo.Context) error {
+    return ctrl.CreateUser(c, client)
   })
 
   // Server
