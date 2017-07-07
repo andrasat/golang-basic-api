@@ -5,79 +5,80 @@ import (
   "strconv"
   "log"
   "github.com/labstack/echo"
-  "github.com/aerospike/aerospike-client-go"
+  . "github.com/aerospike/aerospike-client-go"
 )
 
 /*
 
-Aerospike      |  SQL
---------------------------------
-namespace      |  db
-sets           |  table
-bin            |  column
-key            |  primary_key
-record         |  row
+Aerospike      |  SQL         | MongoDB
+---------------------------------------------
+namespace      |  db          | db
+sets           |  table       | collection
+key            |  primary_key |
+bin            |  column      |
+record         |  row         |
 
 */
 
-type Data struct {
-  ID    int     `json:"id"`
-  Body  string  `json:"body"`
+type User struct {
+  Id        int     `json:"id"`
+  Username  string  `json:"username"`
+  Password  string  `json:"password"`
+  Email     string  `json:"email"`
 }
-
-client, err := as.NewClient("127.0.0.1", 3000)
-if err != nil {
-  log.Fatal(err)
-}
-
-key, err := as.NewKey("namespace-test", "set-test", "key-test")
-if err != nil {
-  log.Fatal(err)
-}
-
-/*
-type Error struct {
-  Status      int    `json:"status"`
-  Title       string `json:"title"`
-  Description string `json"description,omitempty`
-}
-
-type Response struct {
-  Errors []Error `json:"errors,omitempty"`
-  Body interface{} `json:"data,omitempty"`
-}
-*/
 
 var (
-  startSequence = 1
-  datas = map[int]*Data{}
+  idSeq = 1
+  users = map[int]*User{}
 
   ErrInternalServer = "Internal Server Error"
 )
 
-// Controller
-func GetOneData(c echo.Context) error {
-  id, _ := strconv.Atoi(c.Param("id"))
-  return c.JSON(http.StatusOK, datas[id])
+func panicOnError(err error) {
+  if err != nil {
+    log.Fatal("Error : %d", err)
+    panic(err)
+  }
 }
 
-func CreateData(c echo.Context) error {
-  bin := as.NewBin("")
+// Controller
+func GetOneData(c echo.Context, client *Client) error {
+  id, _ := strconv.Atoi(c.Param("id"))
+  return c.JSON(http.StatusOK, users[id])
+}
 
-  if err := c.Bind(d); err != nil {
+func CreateData(c echo.Context, client *Client) error {
+
+  key, err := NewKey("test", "Users-test", "user-key-test")
+  panicOnError(err)
+
+  u := new(User)
+  u.Id = idSeq
+
+  if err := c.Bind(u); err != nil {
+    panicOnError(err)
     return c.JSON(http.StatusInternalServerError, ErrInternalServer)
   }
 
-  d.ID = startSequence
-  d.Body = c.FormValue("body")
+  userBin := BinMap{
+    "id"      : u.Id,
+    "username": u.Username,
+    "password": u.Password,
+    "email"   : u.Email,
+  }
 
-  startSequence++
-  return c.JSON(http.StatusCreated, d)
+  err = client.Put(nil, key, userBin)
+  panicOnError(err)
+  log.Println(u)
+
+  users[u.Id] = u
+  idSeq++
+  return c.JSON(http.StatusCreated, u)
 }
 
-func UpdateUser(c echo.Context) {
-  d := new(Data)
-
-
-}
+// func UpdateUser(c echo.Context) {
+//   d := new(Data)
+//
+//
+// }
 
