@@ -42,12 +42,12 @@ func panicOnError(err error) {
 }
 
 // Controller
-func GetOneData(c echo.Context, client *Client) error {
+func GetOneUser(c echo.Context, client *Client) error {
   id, _ := strconv.Atoi(c.Param("id"))
   return c.JSON(http.StatusOK, users[id])
 }
 
-func CreateData(c echo.Context, client *Client) error {
+func CreateUser(c echo.Context, client *Client) error {
 
   key, err := NewKey("test", "Users-test", "user-key-test")
   panicOnError(err)

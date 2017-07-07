@@ -60,11 +60,11 @@ func main() {
   })
 
   e.GET("/data/:id", func(c echo.Context) error {
-    return controller.GetOneData(c, client)
+    return controller.GetOneUser(c, client)
   })
 
   e.POST("/data", func(c echo.Context) error {
-    return controller.CreateData(c, client)
+    return controller.CreateUser(c, client)
   })
 
   // Server
