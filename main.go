@@ -19,28 +19,6 @@ func main() {
 
   defer client.Close()
 
-  // key, err := as.NewKey("test", "set-test", "key-test")
-  // if err != nil {
-  //   log.Fatal(err)
-  // }
-
-  // bins := as.BinMap{
-  //   "username": "test",
-  //   "password": "test-pwd",
-  // }
-  //
-  // err = client.Put(nil, key, bins)
-  // if err != nil {
-  //   log.Fatal(err)
-  // }
-  //
-  // rec, err := client.Get(nil, key)
-  // if err != nil {
-  //   log.Fatal(err)
-  // }
-  //
-  // log.Println(rec)
-
   // Echo init
   e := echo.New()
 
