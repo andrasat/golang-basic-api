@@ -2,8 +2,8 @@ package controller
 
 import (
   "net/http"
-  "strconv"
   "log"
+
   "github.com/labstack/echo"
   . "github.com/aerospike/aerospike-client-go"
 )
@@ -26,8 +26,9 @@ type User struct {
 }
 
 type Response struct {
-  Data      *Recordset `json:"data"`
-  Message   error `json:"test-message"`
+  Errors    error         `json:"error,omitempty"`
+  Message   string        `json:"message,omitempty"`
+  Data      interface{}   `json:"data,omitempty"`
 }
 
 var (
@@ -38,6 +39,7 @@ var (
 
   ErrInternalServer   = "Internal Server Error"
   ErrBadRequest       = "Bad Request"
+  RecNotFound         = "Record Not Found"
 )
 
 func panicOnError(err error) {
@@ -49,12 +51,27 @@ func panicOnError(err error) {
 
 // Controller
 func GetOneUser(c echo.Context, client *Client) error {
-  id, _ := strconv.Atoi(c.Param("id"))
-  return c.JSON(http.StatusOK, id)
+
+  r := new(Response)
+
+  key, err := NewKey(namespace, set, c.Param("email"))
+  panicOnError(err)
+
+  rec, err := client.Get(nil, key)
+  panicOnError(err)
+
+  if rec == nil {
+    r.Message = RecNotFound
+    return c.JSON(http.StatusOK, r)
+  }
+
+  r.Data = rec
+  return c.JSON(http.StatusOK, r)
 }
 
 func GetAllUsers(c echo.Context, client *Client) error {
-  
+
+  r := new(Response)
   var users []BinMap
 
   scPolicy := NewScanPolicy()
@@ -65,20 +82,23 @@ func GetAllUsers(c echo.Context, client *Client) error {
   recordSet, err := client.ScanAll(scPolicy, namespace, set)
   // seeRec := <-recordSet.Records // Handle if set is not found inside the namespace -> memory pointer return null
 
-  if err != nil {
+  if err != nil && <-recordSet.Records != nil {
+    r.Errors = err
     panicOnError(err)
-    return c.JSON(http.StatusBadRequest, err)
+    return c.JSON(http.StatusBadRequest, r)
   }
 
   for res := range recordSet.Results() {
     if res.Err != nil {
-      return c.JSON(http.StatusBadRequest, res.Err)
+      r.Errors = err
+      return c.JSON(http.StatusBadRequest, r)
     } else {
       users = append(users, res.Record.Bins)
     }
   }
 
-  return c.JSON(http.StatusOK, users)
+  r.Data = users
+  return c.JSON(http.StatusOK, r)
 }
 
 func CreateUser(c echo.Context, client *Client) error {

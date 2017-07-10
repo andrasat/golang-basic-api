@@ -37,7 +37,7 @@ func main() {
     return c.String(http.StatusOK, "Hello Go 1234567890")
   })
 
-  e.GET("/users/:id", func(c echo.Context) error {
+  e.GET("/users/:email", func(c echo.Context) error {
     return ctrl.GetOneUser(c, client)
   })
 
