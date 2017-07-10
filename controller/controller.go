@@ -31,7 +31,7 @@ type Response struct {
 }
 
 var (
-  users               = map[int]*User{}
+  // users               = map[int]*User{}
   namespace           = "test"
   set                 = "Users-test"
   scPolicy            = NewScanPolicy()
@@ -50,30 +50,35 @@ func panicOnError(err error) {
 // Controller
 func GetOneUser(c echo.Context, client *Client) error {
   id, _ := strconv.Atoi(c.Param("id"))
-  return c.JSON(http.StatusOK, users[id])
+  return c.JSON(http.StatusOK, id)
 }
 
 func GetAllUsers(c echo.Context, client *Client) error {
+  
+  var users []BinMap
 
-  recordSet, err := client.ScanAll(nil, namespace, set)
-  // panicOnError(err)
+  scPolicy := NewScanPolicy()
+  scPolicy.ConcurrentNodes = true
+  scPolicy.Priority = HIGH
+  scPolicy.IncludeBinData = true
+
+  recordSet, err := client.ScanAll(scPolicy, namespace, set)
+  // seeRec := <-recordSet.Records // Handle if set is not found inside the namespace -> memory pointer return null
+
+  if err != nil {
+    panicOnError(err)
+    return c.JSON(http.StatusBadRequest, err)
+  }
 
   for res := range recordSet.Results() {
     if res.Err != nil {
-      // panicOnError(res.Err)
       return c.JSON(http.StatusBadRequest, res.Err)
     } else {
-      log.Println(recordSet)
-      return c.JSON(http.StatusOK, res.Record.Bins)
+      users = append(users, res.Record.Bins)
     }
-
   }
 
-  res := new(Response)
-  res.Data = recordSet
-  res.Message = err
-
-  return c.JSON(http.StatusInternalServerError, res)
+  return c.JSON(http.StatusOK, users)
 }
 
 func CreateUser(c echo.Context, client *Client) error {
