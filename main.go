@@ -49,6 +49,10 @@ func main() {
     return ctrl.CreateUser(c, client)
   })
 
+  e.PUT("users/:email", func(c echo.Context) error {
+    return ctrl.UpdateUser(c, client)
+  })
+
   // Server
   e.Logger.Fatal(e.Start(":8080"))
 }

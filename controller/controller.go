@@ -35,8 +35,8 @@ var (
   // users               = map[int]*User{}
   namespace           = "test"
   set                 = "Users-test"
-  scPolicy            = NewScanPolicy()
 
+  OKMessage           = "OK"
   ErrInternalServer   = "Internal Server Error"
   ErrBadRequest       = "Bad Request"
   RecNotFound         = "Record Not Found"
@@ -62,10 +62,10 @@ func GetOneUser(c echo.Context, client *Client) error {
 
   if rec == nil {
     r.Message = RecNotFound
-    return c.JSON(http.StatusOK, r)
+    return c.JSON(http.StatusNotFound, r)
   }
 
-  r.Data = rec
+  r.Data = rec.Bins
   return c.JSON(http.StatusOK, r)
 }
 
@@ -74,19 +74,20 @@ func GetAllUsers(c echo.Context, client *Client) error {
   r := new(Response)
   var users []BinMap
 
-  scPolicy := NewScanPolicy()
-  scPolicy.ConcurrentNodes = true
-  scPolicy.Priority = HIGH
-  scPolicy.IncludeBinData = true
-
-  recordSet, err := client.ScanAll(scPolicy, namespace, set)
+  recordSet, err := client.ScanAll(nil, namespace, set)
   // seeRec := <-recordSet.Records // Handle if set is not found inside the namespace -> memory pointer return null
 
-  if err != nil && <-recordSet.Records != nil {
+  if err != nil {
     r.Errors = err
     panicOnError(err)
     return c.JSON(http.StatusBadRequest, r)
   }
+  // if <-recordSet.Records == nil {
+  //   r.Message = RecNotFound
+  //   return c.JSON(http.StatusNotFound, r)
+  // }
+  // err = recordSet.Close();
+  // panicOnError(err)
 
   for res := range recordSet.Results() {
     if res.Err != nil {
@@ -104,10 +105,13 @@ func GetAllUsers(c echo.Context, client *Client) error {
 func CreateUser(c echo.Context, client *Client) error {
 
   u := new(User)
+  r := new(Response)
 
   if err := c.Bind(u); err != nil {
     panicOnError(err)
-    return c.JSON(http.StatusInternalServerError, ErrInternalServer)
+    r.Errors = err
+    r.Message = ErrInternalServer
+    return c.JSON(http.StatusInternalServerError, r)
   }
 
   key, err := NewKey(namespace, set, u.Email)
@@ -120,15 +124,48 @@ func CreateUser(c echo.Context, client *Client) error {
 
   err = client.Put(nil, key, userBin)
   panicOnError(err)
-  log.Println(u)
 
-
-  return c.JSON(http.StatusCreated, u)
+  r.Message = OKMessage
+  r.Data = u
+  return c.JSON(http.StatusCreated, r)
 }
 
-// func UpdateUser(c echo.Context) {
-//   d := new(Data)
-//
-//
-// }
+func UpdateUser(c echo.Context, client *Client) error {
+
+  r := new(Response)
+  u := new(User)
+
+  key, err := NewKey(namespace, set, c.Param("email"))
+  panicOnError(err)
+
+  rec, err := client.Get(nil, key)
+  panicOnError(err)
+
+  if rec == nil {
+    r.Message = RecNotFound
+    return c.JSON(http.StatusNotFound, r)
+  }
+
+  u.Email = rec.Bins["email"].(string)
+  u.Password = rec.Bins["password"].(string)
+
+  if err := c.Bind(u); err != nil {
+    panicOnError(err)
+    r.Errors = err
+    r.Message = ErrInternalServer
+    return c.JSON(http.StatusInternalServerError, r)
+  }
+
+  userBin := BinMap{
+    "email"     : u.Email,
+    "password"  : u.Password,
+  }
+
+  err = client.Put(nil, key, userBin)
+  panicOnError(err)
+
+  r.Data = u
+  r.Message = OKMessage
+  return c.JSON(http.StatusOK, r)
+}
 
