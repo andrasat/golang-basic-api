@@ -1,10 +1,9 @@
 package main
 
 import (
-  "net/http"
   "log"
 
-  ctrl "github.com/andrasat/golang-basic-api/controller"
+  "github.com/andrasat/golang-basic-api/controller"
   "github.com/labstack/echo"
   "github.com/labstack/echo/middleware"
   as "github.com/aerospike/aerospike-client-go"
@@ -30,28 +29,16 @@ func main() {
   e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
     AllowOrigins: []string{"*"},
     AllowMethods: []string{echo.GET, echo.PUT, echo.POST, echo.DELETE},
-    }))
+  }))
+
+  ctr := &controller.Controller{DB: client}
 
   // Routes
-  e.GET("/", func(c echo.Context) error {
-    return c.String(http.StatusOK, "Hello Go 1234567890")
-  })
-
-  e.GET("/users/:email", func(c echo.Context) error {
-    return ctrl.GetOneUser(c, client)
-  })
-
-  e.GET("/users", func(c echo.Context) error {
-    return ctrl.GetAllUsers(c, client)
-  })
-
-  e.POST("/users", func(c echo.Context) error {
-    return ctrl.CreateUser(c, client)
-  })
-
-  e.PUT("users/:email", func(c echo.Context) error {
-    return ctrl.UpdateUser(c, client)
-  })
+  e.GET("/users/:username", ctr.GetOneUser)
+  e.GET("/users", ctr.GetAllUsers)
+  e.POST("/users/register", ctr.CreateUser)
+  e.POST("/users/login", ctr.LoginUser)
+  e.PUT("/users/:username", ctr.UpdateUser)
 
   // Server
   e.Logger.Fatal(e.Start(":8080"))
