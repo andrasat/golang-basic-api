@@ -31,7 +31,9 @@ const (
   set                 = "Users-test"
 
   OKMessage           = "OK"
+  FAILMessage         = "Fail"
   ErrInternalServer   = "Internal Server Error"
   ErrBadRequest       = "Bad Request"
   RecNotFound         = "Record Not Found"
+  NotAuthorized       = "Wrong Password"
 )

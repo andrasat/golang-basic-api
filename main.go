@@ -23,7 +23,7 @@ func main() {
 
   // Middlewares
   e.Use(middleware.Logger())
-  e.Use(middleware.Recover())
+  //e.Use(middleware.Recover())
 
   // CORS
   e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
