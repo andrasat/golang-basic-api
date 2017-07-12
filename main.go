@@ -40,7 +40,7 @@ func main() {
   e.GET("/users", ctr.GetAllUsers)
   e.POST("/users/register", ctr.CreateUser)
   e.POST("/users/login", ctr.LoginUser)
-  e.PUT("/users/:username", ctr.UpdateUser)
+  e.PUT("/users/:username", ctr.UpdateUser, md.JWTAuthenticator)
 
   // e.Use(middleware.JWT([]byte("SECRET")))
   e.DELETE("/users/delete", ctr.DeleteUser, md.JWTAuthenticator)
