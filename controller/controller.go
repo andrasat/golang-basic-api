@@ -32,6 +32,7 @@ const (
 
   OKMessage           = "OK"
   FAILMessage         = "Fail"
+  FieldCannotEmpty    = "Fields cannot be Empty"
   ErrInternalServer   = "Internal Server Error"
   ErrBadRequest       = "Bad Request"
   RecNotFound         = "Record Not Found"

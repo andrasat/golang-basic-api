@@ -3,8 +3,8 @@ package controller
 import (
   "net/http"
   "time"
-  "log"
-  "fmt"
+  // "log"
+  // "fmt"
 
   bc "golang.org/x/crypto/bcrypt"
   "github.com/dgrijalva/jwt-go"
@@ -98,6 +98,11 @@ func (ct *Controller) CreateUser(c echo.Context) error {
     return c.JSON(http.StatusInternalServerError, r)
   }
 
+  if u.Username == "" || u.Email == "" || u.Password == "" {
+    r.Message = FieldCannotEmpty
+    return c.JSON(http.StatusBadRequest, r)
+  }
+
   key, err := as.NewKey(namespace, set, u.Username)
   if err != nil {
     r.Errors = err
@@ -124,6 +129,7 @@ func (ct *Controller) CreateUser(c echo.Context) error {
 
   r.Message = OKMessage
   u.Password = ""
+  u.Email = ""
   r.Data = u
   return c.JSON(http.StatusCreated, r)
 }
@@ -139,7 +145,6 @@ func (ct *Controller) LoginUser(c echo.Context) error {
   if err := c.Bind(u); err != nil {
     r.Errors = err
     r.Message = ErrInternalServer+", Bind Error"
-    log.Println("Bind Error")
     return c.JSON(http.StatusInternalServerError, r)
   }
 
@@ -147,7 +152,6 @@ func (ct *Controller) LoginUser(c echo.Context) error {
   if err != nil {
     r.Errors = err
     r.Message = ErrInternalServer+", NewKey Error"
-    log.Println("Key Error")
     return c.JSON(http.StatusInternalServerError, r)
   }
 
@@ -155,18 +159,14 @@ func (ct *Controller) LoginUser(c echo.Context) error {
   if err != nil {
     r.Message = ErrInternalServer+", Aerospike Error"
     r.Errors = err
-    log.Println("Rec Error")
     return c.JSON(http.StatusInternalServerError, r)
   } else if rec == nil {
     r.Message = RecNotFound
     return c.JSON(http.StatusNotFound, r)
   }
 
-fmt.Println(rec.Bins["password"]);
   getPass := rec.Bins["password"].(string)
-  fmt.Println("apa bedanya?")
 
-  log.Println(getPass)
   if err := bc.CompareHashAndPassword([]byte(getPass), []byte(u.Password)); err == nil {
 
     // Hide Password
@@ -230,9 +230,32 @@ func (ct *Controller) UpdateUser(c echo.Context) error {
     return c.JSON(http.StatusInternalServerError, r)
   }
 
+  if u.Password == "" {
+    userBin := as.BinMap{
+      "email"   : u.Email,
+    }
+
+    err = ct.DB.Put(nil, key, userBin)
+    if err != nil {
+      r.Errors = err
+      return c.JSON(http.StatusInternalServerError, r)
+    }
+
+    r.Data = u
+    r.Message = OKMessage
+    return c.JSON(http.StatusOK, r)
+  }
+
+  hashedPass, err := bc.GenerateFromPassword([]byte(u.Password), bc.DefaultCost)
+  if err != nil {
+    r.Errors = err
+    return c.JSON(http.StatusInternalServerError, r)
+  }
+
+  u.Password = string(hashedPass)
   userBin := as.BinMap{
     "email"     : u.Email,
-    "password"  : u.Password,
+    "password"  : string(hashedPass),
   }
 
   err = ct.DB.Put(nil, key, userBin)
