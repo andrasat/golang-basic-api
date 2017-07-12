@@ -3,8 +3,7 @@ package controller
 import (
   "net/http"
   "time"
-  // "log"
-  // "fmt"
+  "fmt"
 
   bc "golang.org/x/crypto/bcrypt"
   "github.com/dgrijalva/jwt-go"
@@ -44,6 +43,7 @@ func (ct *Controller) GetOneUser(c echo.Context) error {
     return c.JSON(http.StatusNotFound, r)
   }
 
+  r.Message = OKMessage
   r.Data = rec.Bins
   return c.JSON(http.StatusOK, r)
 }
@@ -79,6 +79,7 @@ func (ct *Controller) GetAllUsers(c echo.Context) error {
     }
   }
 
+  r.Message = OKMessage
   r.Data = users
   return c.JSON(http.StatusOK, r)
 }
@@ -175,8 +176,10 @@ func (ct *Controller) LoginUser(c echo.Context) error {
     // Create Token
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
       "username"  : u.Username,
-      "nbf"       : time.Now().Add(time.Hour * 48).Unix(),
+      "exp"       : time.Now().Add(time.Hour * 24).Unix(),
     })
+    // "iat"       : time.Now().Unix(),
+    // "nbf"       : time.Now().Add(time.Hour * 48).Unix(),
 
     t, err := token.SignedString([]byte("SECRET"))
     if err != nil {
@@ -188,6 +191,7 @@ func (ct *Controller) LoginUser(c echo.Context) error {
     u.Token = t
     r.Message = OKMessage
     r.Data = u
+    fmt.Printf("This is your TOKEN : %v\n\n", t)
     return c.JSON(http.StatusOK, r)
   }
 
@@ -230,12 +234,15 @@ func (ct *Controller) UpdateUser(c echo.Context) error {
     return c.JSON(http.StatusInternalServerError, r)
   }
 
-  if u.Password == "" {
-    userBin := as.BinMap{
-      "email"   : u.Email,
-    }
+  if c.FormValue("Email") == "" {
+    r.Message = FieldCannotEmpty
+    return c.JSON(http.StatusBadRequest, r)
+  }
 
-    err = ct.DB.Put(nil, key, userBin)
+  if u.Password == "" {
+    mailBin := as.NewBin("email", u.Email)
+
+    err = ct.DB.PutBins(nil, key, mailBin)
     if err != nil {
       r.Errors = err
       return c.JSON(http.StatusInternalServerError, r)
@@ -253,12 +260,10 @@ func (ct *Controller) UpdateUser(c echo.Context) error {
   }
 
   u.Password = string(hashedPass)
-  userBin := as.BinMap{
-    "email"     : u.Email,
-    "password"  : string(hashedPass),
-  }
+  mailBin := as.NewBin("email", u.Email)
+  passBin := as.NewBin("password", string(hashedPass))
 
-  err = ct.DB.Put(nil, key, userBin)
+  err = ct.DB.PutBins(nil, key, mailBin, passBin)
   if err != nil {
     r.Errors = err
     return c.JSON(http.StatusInternalServerError, r)
@@ -266,5 +271,34 @@ func (ct *Controller) UpdateUser(c echo.Context) error {
 
   r.Data = u
   r.Message = OKMessage
+  return c.JSON(http.StatusOK, r)
+}
+
+/*  DELETE ONE USER
+    --------------------------------------------------
+*/
+
+func (ct *Controller) DeleteUser(c echo.Context) error {
+
+  r := new(Response)
+
+  uname := c.Get("username").(string)
+  // exp := c.Get("exp").(int64)
+
+  key, _ := as.NewKey(namespace, set, uname)
+
+  exists, err := ct.DB.Delete(nil, key)
+  if err != nil {
+    r.Message = FAILMessage
+    r.Errors = err
+    return c.JSON(http.StatusInternalServerError, r)
+  } else if !exists {
+    r.Message = RecNotFound
+    r.Data    = exists
+    return c.JSON(http.StatusNotFound, r)
+  }
+
+  r.Message = OKMessage
+  r.Data    = exists
   return c.JSON(http.StatusOK, r)
 }
