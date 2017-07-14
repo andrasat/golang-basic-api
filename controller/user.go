@@ -63,13 +63,6 @@ func (ct *Controller) GetAllUsers(c echo.Context) error {
     return c.JSON(http.StatusInternalServerError, r)
   }
 
-  // If set is not found inside the namespace -> memory pointer return null
-  // if <-recordSet.Records == nil {
-  //   r.Message = RecNotFound
-  //   return c.JSON(http.StatusNotFound, r)
-  // }
-  // err = recordSet.Close();
-
   for res := range recordSet.Results() {
     if res.Err != nil {
       r.Errors = err

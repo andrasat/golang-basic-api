@@ -34,8 +34,6 @@ func (md *Middleware) JWTAuthenticator(next echo.HandlerFunc) echo.HandlerFunc {
     }
 
     if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-      // fmt.Println(claims["username"])
-      // fmt.Println(claims["exp"])
       c.Set("username", claims["username"])
       c.Set("exp", claims["exp"])
       return next(c)

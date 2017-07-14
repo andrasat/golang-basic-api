@@ -3,8 +3,9 @@ package main
 import (
   "log"
 
-  "github.com/andrasat/golang-basic-api/controller"
-  mid "github.com/andrasat/golang-basic-api/middleware"
+  control "github.com/andrasat/golang-basic-api/controller"
+  // mid "github.com/andrasat/golang-basic-api/middleware"
+
   "github.com/labstack/echo"
   "github.com/labstack/echo/middleware"
   as "github.com/aerospike/aerospike-client-go"
@@ -32,18 +33,16 @@ func main() {
   //   AllowMethods: []string{echo.GET, echo.PUT, echo.POST, echo.DELETE},
   // }))
 
-  ctr := &controller.Controller{DB: client}
-  md := &mid.Middleware{}
+  ctr := &control.Controller{DB: client}
+  // md := &mid.Middleware{}
 
   // Routes
   e.GET("/users/:username", ctr.GetOneUser)
   e.GET("/users", ctr.GetAllUsers)
   e.POST("/users/register", ctr.CreateUser)
   e.POST("/users/login", ctr.LoginUser)
-  e.PUT("/users/:username", ctr.UpdateUser, md.JWTAuthenticator)
-
-  // e.Use(middleware.JWT([]byte("SECRET")))
-  e.DELETE("/users/delete", ctr.DeleteUser, md.JWTAuthenticator)
+  e.PUT("/users", ctr.UpdateUser)
+  e.DELETE("/users", ctr.DeleteUser)
 
   // Server
   e.Logger.Fatal(e.Start(":8080"))
