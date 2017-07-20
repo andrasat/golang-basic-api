@@ -1,23 +1,18 @@
 package controller
 
 import (
+	"github.com/julienschmidt/httprouter"
 	"net/http"
-
-	"gopkg.in/mgo.v2"
 )
 
-type User struct {
-	Username string `json:"username,omitempty"`
-	Email    string `json:"email,omitempty"`
-	Token    string `json:"token,omitempty"`
-	Password string `json:"password,omitempty"`
-}
+func (ct *Controller) GetOneUser(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
-func (ct *Controller) GetAllUser(w http.ResponseWriter, r *http.Request) {
-
-	DB := ct.s.Copy()
+	DB := ct.S.Copy()
 	defer DB.Close()
 	res := new(Response)
+
+	res.Message = "Test Message"
+	res.Data = "This is the data"
 
 	ResponseAsJSON(w, res, http.StatusOK)
 }

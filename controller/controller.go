@@ -7,7 +7,7 @@ import (
 )
 
 type Controller struct {
-	s *Session
+	S *Session
 }
 
 type Response struct {
@@ -18,8 +18,8 @@ type Response struct {
 
 func ResponseAsJSON(w http.ResponseWriter, r *Response, status int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(code)
+	w.WriteHeader(status)
 
-	result, err := json.Marshal(r)
+	result, _ := json.Marshal(r)
 	w.Write(result)
 }
