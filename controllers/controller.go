@@ -1,4 +1,4 @@
-package controller
+package controllers
 
 import (
 	"encoding/json"
@@ -22,4 +22,10 @@ func ResponseAsJSON(w http.ResponseWriter, r *Response, status int) {
 
 	result, _ := json.Marshal(r)
 	w.Write(result)
+}
+
+func ResponseError(w http.ResponseWriter, r *Response, status int) {
+	w.Header().Set("WWW-Authenticate", "Basic-realm=TEST SERVER")
+
+	http.Error(w, r.Errors.Error(), status)
 }

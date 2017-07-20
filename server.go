@@ -12,14 +12,16 @@ import (
 )
 
 const (
-	addr = ":8080"
+	addr     = ":8080"
+	serverDB = "localhost"
 )
 
 func main() {
-	session, err := mgo.Dial("mongodb://localhost/purego")
+	session, err := mgo.Dial(serverDB)
 	if err != nil {
 		log.Fatal("Mongo server error", err)
 	}
+	defer session.Close()
 
 	r := httprouter.New()
 	ro.Routes(r, session)
