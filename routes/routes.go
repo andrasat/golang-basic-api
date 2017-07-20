@@ -1,7 +1,7 @@
 package routes
 
 import (
-	ctr "github.com/andrasat/pure-golang/controller"
+	ctr "github.com/andrasat/pure-golang/controllers"
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/mgo.v2"
 )
