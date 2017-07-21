@@ -7,12 +7,11 @@ import (
 	"time"
 
 	ro "github.com/andrasat/pure-golang/routes"
-	"github.com/julienschmidt/httprouter"
 	"gopkg.in/mgo.v2"
 )
 
 const (
-	addr     = ":8080"
+	addr     = ":3000"
 	serverDB = "localhost"
 )
 
@@ -23,12 +22,9 @@ func main() {
 	}
 	defer session.Close()
 
-	r := httprouter.New()
-	ro.Routes(r, session)
-
 	server := &http.Server{
 		Addr:           addr,
-		Handler:        r,
+		Handler:        ro.Routes(session),
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,

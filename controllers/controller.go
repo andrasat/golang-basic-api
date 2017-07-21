@@ -11,13 +11,14 @@ type Controller struct {
 }
 
 type Response struct {
-	Errors  error       `json:"error,omitempty"`
+	Errors  string      `json:"error,omitempty"`
 	Message string      `json:"message,omitempty"`
 	Data    interface{} `json:"data,omitempty"`
 }
 
 func ResponseAsJSON(w http.ResponseWriter, r *Response, status int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("WWW-Authenticate", "Basic-realm=TEST SERVER")
 	w.WriteHeader(status)
 
 	result, _ := json.Marshal(r)
@@ -25,7 +26,10 @@ func ResponseAsJSON(w http.ResponseWriter, r *Response, status int) {
 }
 
 func ResponseError(w http.ResponseWriter, r *Response, status int) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("WWW-Authenticate", "Basic-realm=TEST SERVER")
+	w.WriteHeader(status)
 
-	http.Error(w, r.Errors.Error(), status)
+	result, _ := json.Marshal(r)
+	w.Write(result)
 }
